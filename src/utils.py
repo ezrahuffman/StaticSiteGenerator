@@ -36,7 +36,7 @@ def split_nodes_delimiter(old_nodes:List[TextNode], delimiter:str, text_type:Tex
                 done = True # only one delimeter found, don't do anything
                 new_nodes.append(TextNode(text, old_node.text_type))
                 continue
-            second_index = text.find(delimiter, first_index + 1)
+            second_index = text.find(delimiter, first_index + len(delimiter))
             if second_index == -1:
                 done = True # only one delimeter found, don't do anything
                 new_nodes.append(TextNode(text, old_node.text_type))
@@ -44,36 +44,21 @@ def split_nodes_delimiter(old_nodes:List[TextNode], delimiter:str, text_type:Tex
 
             if first:
                 new_nodes.append(TextNode(text[:first_index], old_node.text_type))
-            new_nodes.append(TextNode(text[first_index+1:second_index], text_type))
+            new_nodes.append(TextNode(text[first_index+len(delimiter):second_index], text_type))
 
             if second_index == len(text) - 1:
                 done = True
                 continue
 
-            text = text[second_index+1:]
+            text = text[second_index+len(delimiter):]
     return new_nodes
 
 def extract_markdown_images(text:str) -> List[tuple]:
     matches = re.findall(r"!\[(.*?)\]\((.*?)\)", text)
-    #print(matches)
-    # ret_lst = []
-    # for match in matches:
-    #     alt_text = match[1:match.find("]")]
-    #     s = match.find("(")+1
-    #     e = match.find(")")
-    #     url_text = match[s:e]
-    #     ret_lst.append(alt_text, url_text)
     return matches
 
 def extract_markdown_links(text:str) -> List[tuple]:
     matches = re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
-    # ret_lst = []
-    # for match in matches:
-    #     link_text = match[1:match.find("]")]
-    #     s = match.find("(")+1
-    #     e = match.find(")")
-    #     url_text = match[s:e]
-    #     ret_lst.append(link_text, url_text)
     return matches
 
 def split_nodes_image(old_nodes:List[TextNode]) -> List[TextNode]:
@@ -111,3 +96,13 @@ def split_nodes_link(old_nodes:List[TextNode]) -> List[TextNode]:
         elif node.text != "":
             new_nodes.append(TextNode(node.text, TextType.TEXT))
     return new_nodes
+
+def text_to_textnodes(text:str)->List[TextNode]:
+    nodes = [TextNode(text, TextType.TEXT)]
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD )
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC )
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE )
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    return nodes
+    
