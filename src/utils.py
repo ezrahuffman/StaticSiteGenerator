@@ -2,6 +2,7 @@ from textnode import *
 from leafnode import LeafNode
 from typing import List
 import re
+from blocktype import BlockType
 
 def text_node_to_html_node(text_node: TextNode):
     match text_node.text_type:
@@ -106,3 +107,50 @@ def text_to_textnodes(text:str)->List[TextNode]:
     nodes = split_nodes_link(nodes)
     return nodes
     
+def markdown_to_blocks(markdown:str)->List[str]:
+    blocks = list(map(lambda x: x.strip(), markdown.split("\n\n")))
+    blocks = list(filter(lambda x: x != "",blocks))
+    return blocks
+
+def is_list(block:str, is_ordered:bool)->bool:
+    lines = block.split('\n')
+    if not is_ordered:
+        for line in lines:
+            if line[:2] != "- ":
+                return False
+        return True
+    
+    # If ordered
+    x = 1
+    for line in lines:
+        if line[:3] != f"{x}. ":
+            return False
+        x += 1
+    return True
+
+# header format is 1-6 #s followed by a space
+def is_heading(s:str)->bool:
+    l = min(len(s),  7)
+    s = s[:l]
+    i = 0
+    while i < len(s) and s[i] == "#":
+        i += 1
+    if i == len(s):
+        return False
+    else:
+        return s[i] == " "
+
+def block_to_block_type(block:str)->BlockType:
+    if len(block) == 0:
+        return BlockType.PARAGRAPH
+    if is_heading(block):
+        return BlockType.HEADING
+    if len(block) >= 6 and  block[:3] == "```"  and block[-3:]:
+        return BlockType.CODE
+    if block[0] == ">":
+        return BlockType.QUOTE
+    if is_list(block, False):
+        return BlockType.UNORDERED_LIST
+    if is_list(block, True):
+        return BlockType.ORDERED_LIST
+    return BlockType.PARAGRAPH
