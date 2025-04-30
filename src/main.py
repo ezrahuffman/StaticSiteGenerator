@@ -1,16 +1,21 @@
 from textnode import *
 import os
 import shutil
+import sys
 from utils import markdown_to_html_node, extract_title
 
 def main():
+    basepath = "/"
+    if len(sys.argv) > 0:
+        basepath = sys.argv[0]
+
     static_dir = "static"
     public_dir = "public"
     content_dir = "content"
     template = "template.html"
     remove_dir(public_dir)
     copy_from_directory(static_dir, public_dir)
-    generate_pages_recursive(content_dir, template, public_dir)
+    generate_pages_recursive(content_dir, template, public_dir, basepath)
 
 def copy_from_directory(from_dir, to_dir):
     if not os.path.exists(from_dir):
@@ -36,7 +41,7 @@ def remove_dir(dir):
     print(f"remove entire directory: {dir}")
     shutil.rmtree(dir)
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, base_path):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     md_content = read_file(from_path)
     template_content = read_file(template_path)
@@ -45,7 +50,8 @@ def generate_page(from_path, template_path, dest_path):
     #print(template_content)
     template_content = template_content.replace("{{ Title }}", title)
     template_content = template_content.replace("{{ Content }}", generated_html)
-    
+    template_content = template_content.replace("href=\"/", f"href={base_path}")
+    template_content = template_content.replace("src=\"/", f"src={base_path}")
     # wrote_file = False
     # while not wrote_file:
     try:
@@ -66,7 +72,7 @@ def read_file(path):
     except Exception as e:
         raise e
             
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, base_path):
     from_dir_contents = os.listdir(dir_path_content)
     for content in from_dir_contents:
         full_content_path = os.path.join(dir_path_content, content)
@@ -74,7 +80,7 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
         if os.path.isfile(full_content_path):
             split = os.path.splitext(full_content_path)
             if split[1] == '.md':
-                generate_page(full_content_path, template_path, full_dest_path[:-3] + ".html")
+                generate_page(full_content_path, template_path, full_dest_path[:-3] + ".html", base_path)
             else:
                 shutil.copy(full_content_path, full_dest_path)
         else:
