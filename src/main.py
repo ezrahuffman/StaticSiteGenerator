@@ -1,12 +1,17 @@
 from textnode import *
 import os
 import shutil
+from utils import markdown_to_html_node, extract_title
 
 def main():
     static_dir = "static"
     public_dir = "public"
+    content_md = "content/index.md"
+    template = "template.html"
+    content_dest = "public/index.html"
     remove_dir(public_dir)
     copy_from_directory(static_dir, public_dir)
+    generate_page(content_md, template, content_dest)
 
 def copy_from_directory(from_dir, to_dir):
     if not os.path.exists(from_dir):
@@ -31,6 +36,36 @@ def remove_dir(dir):
         return
     print(f"remove entire directory: {dir}")
     shutil.rmtree(dir)
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    md_content = read_file(from_path)
+    template_content = read_file(template_path)
+    generated_html = markdown_to_html_node(md_content).to_html()
+    title = extract_title(md_content)
+    print(template_content)
+    template_content = template_content.replace("{{ Title }}", title)
+    template_content = template_content.replace("{{ Content }}", generated_html)
+    
+    # wrote_file = False
+    # while not wrote_file:
+    try:
+        with open(dest_path, 'w') as f:
+            f.write(template_content)
+    except Exception as e:
+        raise e
+    
+
+def read_file(path):
+    try:
+        with open(path, 'r') as f:
+            content = f.read()
+            return content
+    except FileNotFoundError:
+        print(f"file not found at {path}")
+        return None
+    except Exception as e:
+        raise e
             
 
 

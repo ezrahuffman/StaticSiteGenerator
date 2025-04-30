@@ -165,6 +165,7 @@ def text_to_children(text:str, block_type:BlockType)->List[HTMLNODE]:
         ret_list:List[HTMLNODE] = []
         lines = text.split('\n')
         for line in lines:
+            line = line[2:]
             nodes = text_to_textnodes(line)
             children = []
             for node in nodes:
@@ -172,20 +173,37 @@ def text_to_children(text:str, block_type:BlockType)->List[HTMLNODE]:
             list_line = ParentNode("li", children)
             ret_list.append(list_line)
         return ret_list
+    if block_type == BlockType.HEADING:
+        i = 0
+        while text[i] == "#":
+            i += 1
+        text = text[i+1:]
+        return text_to_children_helper(text)
+    if block_type == BlockType.QUOTE:
+        lines = text.split('\n')
+        for i in range(len(lines)):
+            if lines[i][0] == ">":
+                lines[i] = lines[i][1:]
+        text = "\n".join(lines)
+        return text_to_children_helper(text)
     else:
-        ret_list:List[HTMLNODE] = []
-        text = text.replace("\n", " ")
-        nodes = text_to_textnodes(text)
-        for node in nodes:
-            ret_list.append(text_node_to_html_node(node))
-        return ret_list
+        return text_to_children_helper(text)
+    
+
+def text_to_children_helper(text):
+    ret_list:List[HTMLNODE] = []
+    text = text.replace("\n", " ")
+    nodes = text_to_textnodes(text)
+    for node in nodes:
+        ret_list.append(text_node_to_html_node(node))
+    return ret_list
 
 def block_type_to_tag(block, block_type):
     translation_map = {
         BlockType.PARAGRAPH:"p",
         BlockType.ORDERED_LIST:"ol",
         BlockType.UNORDERED_LIST:"ul",
-        BlockType.QUOTE:"q",
+        BlockType.QUOTE:"blockquote",
     }
     if block_type in translation_map:
         return translation_map[block_type]
@@ -212,12 +230,18 @@ def markdown_to_html_node(markdown:str)->HTMLNODE:
             block_parent = ParentNode(block_type_to_tag(block, block_type), html_children)
             first_children.append(block_parent)
         else:
-            
             text = block[3:-3].strip()
             text_node = TextNode(text, TextType.CODE)
             html_node = text_node_to_html_node(text_node)
             block_parent = ParentNode(block_type_to_tag(block, block_type), [html_node])
             first_children.append(block_parent)
     return ParentNode("div", first_children)
+
+def extract_title(markdown:str):
+    lines = markdown.split('\n')
+    for line in lines:
+        if line[:2] == "# ":
+            return line[2:].strip()
+    raise Exception("No Header line found (needs to be h1 i.e. start with '# ')")
     
         
