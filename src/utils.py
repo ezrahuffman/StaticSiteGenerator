@@ -162,10 +162,11 @@ def block_to_block_type(block:str)->BlockType:
 
 def text_to_children(text:str, block_type:BlockType)->List[HTMLNODE]:
     if block_type == BlockType.ORDERED_LIST or block_type == BlockType.UNORDERED_LIST:
+        line_marker_len = 2 if block_type == BlockType.UNORDERED_LIST else 3
         ret_list:List[HTMLNODE] = []
         lines = text.split('\n')
         for line in lines:
-            line = line[2:]
+            line = line[line_marker_len:]
             nodes = text_to_textnodes(line)
             children = []
             for node in nodes:
@@ -183,7 +184,7 @@ def text_to_children(text:str, block_type:BlockType)->List[HTMLNODE]:
         lines = text.split('\n')
         for i in range(len(lines)):
             if lines[i][0] == ">":
-                lines[i] = lines[i][1:]
+                lines[i] = lines[i][2:]
         text = "\n".join(lines)
         return text_to_children_helper(text)
     else:
@@ -242,6 +243,6 @@ def extract_title(markdown:str):
     for line in lines:
         if line[:2] == "# ":
             return line[2:].strip()
-    raise Exception("No Header line found (needs to be h1 i.e. start with '# ')")
+    raise Exception("No Header line found in(needs to be h1 i.e. start with '# ')")
     
         

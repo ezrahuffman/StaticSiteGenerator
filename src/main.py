@@ -6,12 +6,11 @@ from utils import markdown_to_html_node, extract_title
 def main():
     static_dir = "static"
     public_dir = "public"
-    content_md = "content/index.md"
+    content_dir = "content"
     template = "template.html"
-    content_dest = "public/index.html"
     remove_dir(public_dir)
     copy_from_directory(static_dir, public_dir)
-    generate_page(content_md, template, content_dest)
+    generate_pages_recursive(content_dir, template, public_dir)
 
 def copy_from_directory(from_dir, to_dir):
     if not os.path.exists(from_dir):
@@ -43,7 +42,7 @@ def generate_page(from_path, template_path, dest_path):
     template_content = read_file(template_path)
     generated_html = markdown_to_html_node(md_content).to_html()
     title = extract_title(md_content)
-    print(template_content)
+    #print(template_content)
     template_content = template_content.replace("{{ Title }}", title)
     template_content = template_content.replace("{{ Content }}", generated_html)
     
@@ -67,6 +66,21 @@ def read_file(path):
     except Exception as e:
         raise e
             
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    from_dir_contents = os.listdir(dir_path_content)
+    for content in from_dir_contents:
+        full_content_path = os.path.join(dir_path_content, content)
+        full_dest_path = os.path.join(dest_dir_path, content)
+        if os.path.isfile(full_content_path):
+            split = os.path.splitext(full_content_path)
+            if split[1] == '.md':
+                generate_page(full_content_path, template_path, full_dest_path[:-3] + ".html")
+            else:
+                shutil.copy(full_content_path, full_dest_path)
+        else:
+            os.mkdir(full_dest_path)
+            generate_pages_recursive(full_content_path, template_path, full_dest_path)
+        
 
 
 if __name__ == "__main__":
