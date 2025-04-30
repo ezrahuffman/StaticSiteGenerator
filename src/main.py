@@ -6,8 +6,9 @@ from utils import markdown_to_html_node, extract_title
 
 def main():
     basepath = "/"
-    if len(sys.argv) > 0:
-        basepath = sys.argv[0]
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
+    print("basepath", basepath)
 
     static_dir = "static"
     public_dir = "public"
@@ -50,10 +51,9 @@ def generate_page(from_path, template_path, dest_path, base_path):
     #print(template_content)
     template_content = template_content.replace("{{ Title }}", title)
     template_content = template_content.replace("{{ Content }}", generated_html)
-    template_content = template_content.replace("href=\"/", f"href={base_path}")
-    template_content = template_content.replace("src=\"/", f"src={base_path}")
-    # wrote_file = False
-    # while not wrote_file:
+    template_content = template_content.replace("href=\"/", f"href=\"{base_path}")
+    template_content = template_content.replace("src=\"/", f"src=\"{base_path}")
+
     try:
         with open(dest_path, 'w') as f:
             f.write(template_content)
@@ -85,7 +85,7 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
                 shutil.copy(full_content_path, full_dest_path)
         else:
             os.mkdir(full_dest_path)
-            generate_pages_recursive(full_content_path, template_path, full_dest_path)
+            generate_pages_recursive(full_content_path, template_path, full_dest_path, base_path)
         
 
 
